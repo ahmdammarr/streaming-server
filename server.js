@@ -1,29 +1,34 @@
-const express = require('express')
-const app = express()
-const server = require('http').Server(app)
+const app = require('express')()
+const http = require('http').Server(app)
 const cors = require('cors')
-const io = require('socket.io')(server,{
-    cors: {
-        origin: "*",
-        methods: ["GET", "POST"],
-      },
-})
-const {v4: uuidV4} = require('uuid')
 
-app.use(cors());
-// app.get('/:room', (req, res) => {
-//     res.render('room', {roomId: req.params.room})
-// })
+const io = require('socket.io')(http, {
+  cors: {
+    origin: '*',
+    methods: ['GET', 'POST']
+  }
+})
+const port = process.env.PORT || 4000
+
+app.get('/', (req, res) => {
+  res.sendFile(__dirname + '/index.html')
+})
 
 io.on('connection', socket => {
-    socket.on('join-room', (roomId, userId) => {
-        socket.join(roomId)
-        socket.broadcast.emit('user-connected', userId)
+  console.log('connection')
+  socket.on('join-room', (roomId, userId) => {
+    console.log()
+      socket.join(roomId)
+      socket.broadcast.emit('user-connected', userId)
 
-        socket.on('disconnect', () => {
-            socket.broadcast.emit('user-disconnected', userId)
-        })
-    })
+      socket.on('disconnect', () => {
+          socket.broadcast.emit('user-disconnected', userId)
+      })
+  })
 })
 
-server.listen(4000)
+
+app.use(cors())
+http.listen(port, () => {
+  console.log(`Socket.IO server running at http://localhost:${port}/`)
+})
